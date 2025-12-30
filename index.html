@@ -526,12 +526,11 @@ async function sendPush(txt) {
     }
 
     if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('OneSignalSDKWorker.js')
-    .then(reg => console.log('Service Worker რეგისტრირებულია'))
+  navigator.serviceWorker.register('OneSignalSDKWorker.js')
+    .then(reg => console.log('Service Worker დარეგისტრირდა'))
     .catch(err => console.log('შეცდომა:', err));
 }
 
-    }
 </script>
 
 </body>
