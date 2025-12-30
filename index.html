@@ -526,7 +526,7 @@ async function sendPush(txt) {
     }
 
     if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/OneSignalSDKWorker.js')
+    navigator.serviceWorker.register('OneSignalSDKWorker.js')
     .then(reg => console.log('Service Worker რეგისტრირებულია'))
     .catch(err => console.log('შეცდომა:', err));
 }
