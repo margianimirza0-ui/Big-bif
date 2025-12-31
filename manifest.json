@@ -1,0 +1,29 @@
+
+{
+  "name": "Big Bif Pro",
+  "short_name": "Big Bif",
+  "description": "Big Bif Inventory Management System",
+  "start_url": "index.html",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "gcm_sender_id": "482941778795"
+}
+
