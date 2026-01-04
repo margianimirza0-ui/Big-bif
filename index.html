@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="ka">
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script>
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  OneSignalDeferred.push(async function(OneSignal) {
+    await OneSignal.init({
+      appId: "9dc11555-f715-40cc-b9d0-338504328a4c",
+    });
+  });
+</script>
+
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Big Bif Pro - Optimized</title>
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icon.png">
+    <link rel="manifest" href="manifest.json">
+
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+
+    <style>
+        :root { --primary: #2575fc; --secondary: #6a11cb; --success: #38ef7d; --danger: #ff5f6d; --warning: #f2994a; --bg: #000000; }
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: white; margin: 0; padding: 15px; -webkit-tap-highlight-color: transparent; }
+        
+        .login-logo { font-size: 80px; margin-bottom: 20px; animation: bounce 2s infinite; }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+        .card { background: #1a1a1a; padding: 18px; border-radius: 18px; margin-bottom: 15px; border: 1px solid #333; }
+        .blue-panel { background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%); padding: 20px; border-radius: 18px; display: flex; gap: 15px; margin-bottom: 15px; }
+        .blue-stat-box { flex: 1; text-align: center; }
+        .blue-stat-box b { display: block; font-size: 1.6em; margin-top: 5px; }
+
+        input, select { width: 100%; padding: 14px; margin: 8px 0; border: 1px solid #444; border-radius: 12px; font-size: 16px; background: #252525; color: white; box-sizing: border-box; outline: none; }
+        input:focus { border-color: var(--primary); }
+        
+        button { cursor: pointer; border: none; font-weight: bold; transition: 0.2s; border-radius: 12px; width: 100%; padding: 14px; active { transform: scale(0.98); } }
+        
+        .btn-auth { background: linear-gradient(to right, #ff5f6d, #ffc371); color: white; margin-top: 20px; }
+        .btn-buy { background: #34495e; color: white; margin-bottom: 10px; }
+        .flex-btns { display: flex; gap: 10px; justify-content: space-between; }
+        .btn-sell { background: linear-gradient(to right, #11998e, #38ef7d); color: white; width: 48%; }
+        .btn-cons { background: linear-gradient(to right, #f2994a, #f2c94c); color: white; width: 48%; }
+        .btn-expense { background: rgba(255, 95, 109, 0.1); color: #ff5f6d; margin-top: 10px; border: 1px solid #ff5f6d; }
+
+        .history-item { border-bottom: 1px solid #333; padding: 12px 5px; position: relative; }
+        .history-total { color: #aaa; font-size: 12px; font-weight: bold; margin-top: 4px; }
+        .action-btns { position: absolute; right: 2px; top: 10px; display: flex; gap: 5px; }
+        .action-btns button { width: auto; padding: 4px 6px; background: none; font-size: 14px; color: white; border: 0.5px solid #444; }
+
+        .type-buy { color: #2575fc !important; font-weight: bold; }
+        .type-sell { color: #38ef7d !important; font-weight: bold; }
+        .type-cons { color: #f2994a !important; font-weight: bold; }
+        .type-exp { color: var(--danger) !important; font-weight: bold; }
+        .type-paid { color: #38ef7d !important; opacity: 0.7; }
+
+        .stat-table { width: 100%; border-collapse: collapse; margin-top: 5px; font-size: 13px; }
+        .stat-table th { color: #777; text-align: left; padding-bottom: 5px; }
+        .stat-table td { padding: 8px 0; border-bottom: 1px solid #222; }
+
+        #modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:1000; justify-content:center; align-items:center; }
+        .modal-content { background:#1a1a1a; width:85%; max-height:70vh; border-radius:20px; padding:20px; border:1px solid #444; overflow-y:auto; }
+        
+        #loading-overlay { position: fixed; top: 10px; right: 10px; background: var(--primary); padding: 5px 10px; border-radius: 20px; font-size: 10px; display: none; z-index: 2000; }
+    </style>
+</head>
+<body>
+
+<div id="loading-overlay">მუშავდება...</div>
+
+<div id="login-screen" style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:95vh;">
+    <div class="login-logo">🍅</div>
+    <h2 style="margin-top: 0;">Big Bif Pro</h2>
+    <div style="width: 85%;">
+        <input type="password" id="passInput" placeholder="შეიყვანეთ პაროლი" inputmode="numeric">
+        <button class="btn-auth" onclick="checkPass()">შესვლა</button>
+    </div>
+</div>
+
+<div id="main-content" style="display:none">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <select id="prod" onchange="loadData()" style="width: auto; margin: 0; background: none; border: none; font-weight: bold; color: white;">
+            <option value="tomato">🍅 პომიდორი</option>
+            <option value="cucumber">🥒 კიტრი</option>
+            <option value="test_product">🧪 ტესტირება</option> 
+        </select>
+        <div id="user-info" style="font-size: 12px; color: #777; font-weight: bold;"></div>
+    </div>
+    
+    <div class="blue-panel">
+        <div class="blue-stat-box"><span>ნაშთი</span><b id="st-qty">0</b></div>
+        <div class="blue-stat-box" style="border-left: 1px solid rgba(255,255,255,0.2); line-height: 1.2;" id="st-rev">0</div>
+    </div>
+
+    <div class="card">
+        <div style="font-weight: bold; color: #ffc371; margin-bottom: 10px;">📅 დღიური გაყიდვები (ბოლო 5 დღე)</div>
+        <table class="stat-table">
+            <thead><tr><th>თარიღი</th><th>კგ</th><th>მოგება</th></tr></thead>
+            <tbody id="daily-stats-body"></tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <button class="btn-buy" onclick="handleAction('buy')">✚ მიღება</button>
+        <div class="flex-btns">
+            <input type="number" id="qty" placeholder="კგ" inputmode="decimal" style="width:48%">
+            <input type="number" id="price" placeholder="₾" inputmode="decimal" style="width:48%">
+        </div>
+        <input type="text" id="note" placeholder="კლიენტი / შენიშვნა" list="clients" style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #444; background: #222; color: white; border-radius: 8px;">
+        <datalist id="clients"></datalist>
+
+        <div class="flex-btns">
+            <button class="btn-sell" onclick="handleAction('sell')">💰 გაყიდვა</button>
+            <button class="btn-cons" onclick="handleAction('cons')">📝 კონსიგნაცია</button>
+        </div>
+        <button class="btn-expense" onclick="handleAction('expense')">⛽ ხარჯი</button>
+    </div>
+
+    <div class="card" style="padding: 0; overflow: hidden;">
+        <div id="total-summary" style="background: #2ecc71; padding: 12px; text-align: center; font-weight: bold;">მოგება: 0.00 ₾</div>
+        <div id="debt-summary" onclick="toggleModal(true)" style="background: #e74c3c; padding: 12px; text-align: center; font-weight: bold; cursor:pointer;">ვალები (ნახვა) 🔍</div>
+        <div style="display: flex; gap: 10px; padding: 0 10px 10px 10px;">
+    <button onclick="archiveHistory()" style="background: #6a11cb; color: white; flex: 2; font-size: 13px; padding: 10px; border-radius: 8px;">📁 სესიის დახურვა (არქივი)</button>
+    <button onclick="showArchiveList()" style="background: #444; color: white; flex: 1; font-size: 13px; padding: 10px; border-radius: 8px;">📚 არქივი</button>
+</div>
+<input type="text" id="histSearch" placeholder="🔍 ძებნა ისტორიაში..." oninput="renderHistory()" style="margin: 10px; width: calc(100% - 20px);">
+<div id="hist" style="max-height: 400px; overflow-y: auto; padding: 10px;"></div>
+
+
+<div id="modal-overlay" onclick="toggleModal(false)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <h3 style="margin-top:0; color:#ffc371;">ვალების სია</h3>
+        <div id="modal-debt-list"></div>
+        <button onclick="toggleModal(false)" style="width:100%; margin-top:20px; background:#444; color:white;">დახურვა</button>
+    </div>
+</div>
+
+<script>
+    // --- 1. კონფიგურაცია ---
+    const firebaseConfig = { 
+        apiKey: "AIzaSyBvMYT8rjNS3LHAggreip_VAxSG58-s53U", 
+        databaseURL: "https://big-bif-default-rtdb.firebaseio.com", 
+        projectId: "big-bif" 
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // მომხმარებლების სია
+    const USERS = {
+        "7777": { name: "მირზა ადმინი", role: "admin" },
+        "1111": { name: "გიორგი", role: "user" },
+        "2222": { name: "ბათა", role: "user" },
+        "3333": { name: "უცნობი", role: "user" }
+    };
+
+    const notifySound = new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3');
+    
+    let isAdmin = false, lastKey = null, isInitialLoad = true, currentUser = "";
+    let visibleCount = 50; 
+    let currentData = { stock: 0, profit: 0, debt: 0, revenue: 0, history: {}, cost: 0, total_cost_value: 0 };
+
+    // --- 2. ავტორიზაცია ---
+    function checkPass() {
+        const p = document.getElementById('passInput').value;
+        const user = USERS[p];
+
+        if (user) {
+            isAdmin = (user.role === "admin");
+            start(user.name);
+        } else {
+            alert("არასწორი პაროლი!");
+            document.getElementById('passInput').value = "";
+        }
+    }
+
+    function start(userName) {
+        currentUser = userName;
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('main-content').style.display = 'block';
+        document.getElementById('user-info').innerText = "👤 " + currentUser;
+        loadData();
+        updateClientList();
+    }
+
+    function toggleLoading(show) {
+        document.getElementById('loading-overlay').style.display = show ? 'block' : 'none';
+    }
+
+    // --- 3. მონაცემების მართვა ---
+    function loadData() {
+        const p = document.getElementById('prod').value;
+        toggleLoading(true);
+        db.ref('inventory/' + p).on('value', (snap) => {
+            const data = snap.val();
+            if (data) {
+                const keys = Object.keys(data.history || {}).sort((a,b) => data.history[a].timestamp - data.history[b].timestamp);
+                const newestKey = keys[keys.length - 1];
+                
+                if (!isInitialLoad && newestKey && newestKey !== lastKey) {
+                    const entry = data.history[newestKey];
+                    sendNotify(`🔔 ${entry.type}`, `${entry.qty} კგ - ${entry.note || ''}`);
+                    lastKey = newestKey;
+                }
+                if(isInitialLoad) lastKey = newestKey;
+                isInitialLoad = false;
+                currentData = data; 
+                updateClientList();
+            } else {
+                currentData = { stock: 0, profit: 0, debt: 0, revenue: 0, history: {}, cost: 0, total_cost_value: 0 };
+            }
+            updateUI();
+            toggleLoading(false);
+        });
+    }
+
+    function getFormattedTime(ts) {
+        const d = ts ? new Date(ts) : new Date();
+        return d.toLocaleString('ka-GE', {hour12:false});
+    }
+
+    function getDateOnly(ts) {
+        const d = ts ? new Date(ts) : new Date();
+        return d.toLocaleDateString('ka-GE');
+    }
+
+    // --- 4. მოქმედებების დამუშავება ---
+    async function handleAction(actionType) {
+    // iPhone-ის მძიმის ფიქსი: ვცვლით მძიმეს წერტილით
+    const qtyVal = document.getElementById('qty').value.replace(',', '.');
+    const priceVal = document.getElementById('price').value.replace(',', '.');
+    
+    const q = Number(qtyVal);
+    const pr = Number(priceVal) || 0;
+    const note = document.getElementById('note').value;
+    
+    if(!q) return alert("შეიყვანეთ რაოდენობა!");
+    
+    if(actionType !== 'expense' && (actionType === 'sell' || actionType === 'cons') && currentData.stock < q) {
+        return alert("მარაგი არასაკმარისია!");
+    }
+
+    if(!confirm(`ნამდვილად გსურთ: ${actionType}?`)) return;
+
+    toggleLoading(true);
+    try {
+        if(actionType === 'buy') {
+            await addStock(q, pr, note);
+        } else {
+            await makeAction(actionType, q, pr, note);
+        }
+        
+        // Push შეტყობინება
+        sendPush(currentUser + "-მა დაამატა: " + q + " კგ (" + actionType + ")");
+
+        clearInputs();
+    } catch (e) {
+        alert("შეცდომა მონაცემების შენახვისას!");
+    }
+    toggleLoading(false);
+}
+
+    async function addStock(q, pr, note) {
+        const p = document.getElementById('prod').value;
+        const nStock = (Number(currentData.stock) || 0) + q;
+        const nTotalVal = (Number(currentData.total_cost_value) || 0) + (q * pr);
+        const nCost = nStock > 0 ? nTotalVal / nStock : 0;
+        const ts = Date.now();
+
+        await db.ref('inventory/' + p).update({ stock: nStock, total_cost_value: nTotalVal, cost: nCost });
+        await db.ref('inventory/' + p + '/history').push({ 
+            type: 'მიღება', qty: q, price: pr, note: note, 
+            timestamp: ts, date: getFormattedTime(ts), saved_cost: nCost,
+            user: currentUser 
+        });
+    }
+
+    async function makeAction(type, q, pr, note) {
+        const p = document.getElementById('prod').value;
+        const currentCost = Number(currentData.cost) || 0;
+        const ts = Date.now();
+        
+        let up = { stock: (Number(currentData.stock) || 0) - q };
+        let entryType = '';
+
+        if(type === 'sell') {
+            up.total_cost_value = (Number(currentData.total_cost_value) || 0) - (currentCost * q);
+            up.profit = (Number(currentData.profit) || 0) + (pr - currentCost) * q;
+            up.revenue = (Number(currentData.revenue) || 0) + (pr * q);
+            entryType = 'გაყიდვა';
+        } else if(type === 'cons') {
+            up.total_cost_value = (Number(currentData.total_cost_value) || 0) - (currentCost * q);
+            up.debt = (Number(currentData.debt) || 0) + (pr * q);
+            entryType = 'კონსიგნაცია';
+        } else if(type === 'expense') {
+            up.stock = Number(currentData.stock) || 0;
+            up.profit = (Number(currentData.profit) || 0) - q;
+            entryType = 'ხარჯი';
+        }
+
+        await db.ref('inventory/' + p).update(up);
+        await db.ref('inventory/' + p + '/history').push({ 
+            type: entryType, qty: q, price: pr, note: note, 
+            timestamp: ts, date: getFormattedTime(ts), saved_cost: currentCost,
+            user: currentUser 
+        });
+    }
+
+    function updateUI() {
+        const rev = Number(currentData.revenue) || 0;
+        const debt = Number(currentData.debt) || 0;
+        const stock = Number(currentData.stock) || 0;
+        const profit = Number(currentData.profit) || 0;
+        
+        document.getElementById('st-qty').innerText = stock.toFixed(1) + " კგ";
+        document.getElementById('st-rev').innerHTML = `
+            <span style="font-size: 0.7em; opacity: 0.9; display: block;">ამონაგები</span>
+            <b style="font-size: 1.2em; display: block;">${rev.toFixed(2)} ₾</b>
+            <div style="font-size: 0.7em; opacity: 0.6; border-top: 1px solid rgba(255,255,255,0.1); margin-top: 2px;">ჯამი: ${(rev+debt).toFixed(2)}</div>
+        `;
+        document.getElementById('total-summary').innerText = `წმინდა მოგება: ${profit.toFixed(2)} ₾`;
+        document.getElementById('debt-summary').innerText = `დავალიანება: ${debt.toFixed(2)} ₾ 🔍`;
+        
+        renderHistory();
+        renderDailyStats();
+    }
+
+    function renderHistory() {
+    const s = document.getElementById('histSearch').value.toLowerCase();
+    
+    let entries = Object.entries(currentData.history || {}).sort((a, b) => {
+        // ვიყენებთ b - a-ს, რომ ახალი (დიდი რიცხვი) იყოს პირველი
+        const timeA = a[1].timestamp || 0;
+        const timeB = b[1].timestamp || 0;
+        return timeB - timeA;
+    });
+
+    if (!s) entries = entries.slice(0, visibleCount);
+
+    
+    // ... დანარჩენი კოდი იგივეა
+
+        
+        let html = entries.map(([k, h]) => {
+            if(s && !h.note.toLowerCase().includes(s) && !h.type.toLowerCase().includes(s)) return '';
+            const total = (Number(h.qty) * Number(h.price)).toFixed(2);
+            let tCls = h.type==='მიღება'?'type-buy':(h.type==='გაყიდვა'?'type-sell':(h.type==='კონსიგნაცია'?'type-cons':(h.type==='ხარჯი'?'type-exp':'type-paid')));
+            
+            return `<div class="history-item">
+                <b class="${tCls}">${h.type}</b>: ${h.qty}კგ × ${h.price}₾
+                <div class="history-total">ჯამი: ${total} ₾</div>
+                <div style="font-size:10px;color:#666;margin-top:2px;">${h.date} | ${h.note || '-'} | 👤 ${h.user || 'უცნობი'}</div>
+                <div class="action-btns">
+                    ${h.type==='კონსიგნაცია'?`<button onclick="payDebt('${k}')">✅</button>`:''}
+                ${isAdmin ? `<button onclick="editEntry('${k}')">✏️</button><button onclick="deleteEntry('${k}')">🗑️</button>` : ''}
+            </div></div>`;
+        }).join('');
+
+        if (!s && entries.length >= visibleCount) {
+            html += `<button onclick="visibleCount+=50; renderHistory();" style="margin-top:10px; background:#222; color:#aaa; border:1px solid #333;">მეტის ჩვენება...</button>`;
+        }
+        document.getElementById('hist').innerHTML = html || "<div style='text-align:center; padding:20px; color:#555;'>ისტორია ცარიელია</div>";
+    }
+
+    function renderDailyStats() {
+        const daily = {};
+        Object.values(currentData.history || {}).forEach(h => {
+            if(h.type === 'გაყიდვა' || h.type === 'გადახდილია') {
+                const day = getDateOnly(h.timestamp);
+                if(!daily[day]) daily[day] = { qty: 0, prof: 0 };
+                daily[day].qty += Number(h.qty);
+                daily[day].prof += (Number(h.price) - Number(h.saved_cost)) * Number(h.qty);
+            }
+        });
+
+        const sortedDays = Object.keys(daily).sort((a,b) => {
+             const [d1,m1,y1] = a.split('.'); const [d2,m2,y2] = b.split('.');
+             return new Date(y2,m2-1,d2) - new Date(y1,m1-1,d1);
+        }).slice(0, 5);
+        
+        document.getElementById('daily-stats-body').innerHTML = sortedDays.map(d => `
+            <tr><td>${d}</td><td><b>${daily[d].qty.toFixed(1)}</b></td><td style="color:#38ef7d">+${daily[d].prof.toFixed(2)} ₾</td></tr>
+        `).join('') || "<tr><td colspan='3' style='text-align:center; padding:10px;'>მონაცემები არაა</td></tr>";
+    }
+
+    async function payDebt(key) {
+        if(!confirm("მოხდა გადახდა?")) return;
+        const p = document.getElementById('prod').value;
+        const h = currentData.history[key];
+        await db.ref('inventory/' + p).update({
+            debt: currentData.debt - (h.price * h.qty),
+            profit: currentData.profit + ((h.price - h.saved_cost) * h.qty),
+            revenue: currentData.revenue + (h.price * h.qty)
+        });
+        await db.ref('inventory/' + p + '/history/' + key).update({ type: 'გადახდილია', user: currentUser });
+    }
+
+    async function sendNotify(title, msg) {
+        try { notifySound.play(); } catch(e){}
+        if ('serviceWorker' in navigator && Notification.permission === "granted") {
+            const reg = await navigator.serviceWorker.ready;
+            reg.showNotification(title, { body: msg, icon: 'icon.png' });
+        }
+    }
+
+    function clearInputs() { 
+        document.getElementById('qty').value=""; 
+        document.getElementById('price').value=""; 
+        document.getElementById('note').value=""; 
+    }
+
+    function toggleModal(show) {
+        document.getElementById('modal-overlay').style.display = show ? 'flex' : 'none';
+        if(show) {
+            const debts = {};
+            Object.values(currentData.history || {}).forEach(h => {
+                if(h.type === 'კონსიგნაცია') {
+                    const n = h.note || "უცნობი";
+                    debts[n] = (debts[n] || 0) + (h.price * h.qty);
+                }
+            });
+            document.getElementById('modal-debt-list').innerHTML = Object.keys(debts).map(n => `
+                <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #333;">
+                    <span>${n}</span><b>${debts[n].toFixed(2)} ₾</b>
+                </div>`).join('') || "ვალები არ არის";
+        }
+    }
+async function sendPush(txt) {
+    const key = "os_v2_app_txarkvpxcvamzooqgocqimukjqcefmtkwrmefa5wdkorgd3rakdiabwpr52ywij54nvzz5ctzxfxqfc6orsyg6yovd3rmvnri6nadzq";
+    const id = "9dc11555-f715-40cc-b9d0-338504328a4c";
+    try {
+        await fetch("https://onesignal.com/api/v1/notifications", {
+            method: "POST",
+            headers: { "Content-Type": "application/json; charset=utf-8", "Authorization": "Basic " + key },
+            body: JSON.stringify({
+                app_id: id,
+                included_segments: ["All Subscriptions"],
+                headings: { "en": "Big Bif Pro" },
+                contents: { "en": txt },
+                // iOS-ისთვის აუცილებელი პარამეტრები ფონური მუშაობისთვის:
+                isIos: true,
+                ios_badgeType: 'Increase',
+                ios_badgeCount: 1,
+                apns_push_type_override: "alert",
+                mutable_content: true,
+                web_push_priority: 10,
+                priority: 10
+            })
+        });
+    } catch (e) { console.error("Push error:", e); }
+}
+
+    async function deleteEntry(key, silent = false) {
+        if(!silent && !confirm("ნამდვილად გსურთ წაშლა?")) return;
+        try {
+            const p = document.getElementById('prod').value;
+            const h = currentData.history[key];
+            if (!h) return;
+            toggleLoading(true);
+            const qty = Number(h.qty);
+            const price = Number(h.price);
+            const sc = Number(h.saved_cost);
+            let up = { ...currentData }; delete up.history;
+
+            if(h.type === 'მიღება') {
+                up.stock = (Number(up.stock) || 0) - qty;
+                up.total_cost_value = (Number(up.total_cost_value) || 0) - (qty * price);
+                up.cost = up.stock > 0 ? up.total_cost_value / up.stock : 0;
+            } else if(h.type === 'გაყიდვა' || h.type === 'გადახდილია') {
+                up.stock = (Number(up.stock) || 0) + qty;
+                up.total_cost_value = (Number(up.total_cost_value) || 0) + (sc * qty);
+                up.profit = (Number(up.profit) || 0) - ((price - sc) * qty);
+                up.revenue = (Number(up.revenue) || 0) - (price * qty);
+            } else if(h.type === 'კონსიგნაცია') {
+                up.stock = (Number(up.stock) || 0) + qty;
+                up.debt = (Number(up.debt) || 0) - (price * qty);
+                up.total_cost_value = (Number(up.total_cost_value) || 0) + (sc * qty);
+            } else if(h.type === 'ხარჯი') {
+                up.profit = (Number(up.profit) || 0) + qty;
+            }
+
+            await db.ref('inventory/' + p).update(up);
+            await db.ref('inventory/' + p + '/history/' + key).remove();
+        } catch (err) { alert("შეცდომა წაშლისას"); }
+        toggleLoading(false);
+    }
+
+    async function editEntry(key) {
+        const h = currentData.history[key];
+        if (!h) return;
+        const nQ = prompt("ახალი რაოდენობა:", h.qty);
+        if (nQ === null) return;
+        const nP = prompt("ახალი ფასი:", h.price);
+        if (nP === null) return;
+        const nN = prompt("ახალი შენიშვნა:", h.note);
+        if (nN === null) return;
+
+        toggleLoading(true);
+        await deleteEntry(key, true);
+        const p = document.getElementById('prod').value;
+        document.getElementById('qty').value = nQ;
+        document.getElementById('price').value = nP;
+        document.getElementById('note').value = nN;
+        
+        if (h.type === 'მიღება') await addStock(Number(nQ), Number(nP), nN);
+        else {
+            let typeKey = h.type === 'გაყიდვა' ? 'sell' : (h.type === 'კონსიგნაცია' ? 'cons' : 'expense');
+            await makeAction(typeKey, Number(nQ), Number(nP), nN);
+        }
+        clearInputs();
+        toggleLoading(false);
+    }
+
+    function updateClientList() {
+        if (!currentData || !currentData.history) return;
+        const clientList = document.getElementById('clients');
+        const uniqueClients = new Set();
+        Object.values(currentData.history).forEach(h => { if (h.note) uniqueClients.add(h.note.trim()); });
+        clientList.innerHTML = "";
+        uniqueClients.forEach(name => {
+            const option = document.createElement('option');
+            option.value = name;
+            clientList.appendChild(option);
+        });
+    }
+
+    if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('OneSignalSDKWorker.js')
+    .then(reg => console.log('Service Worker დარეგისტრირდა'))
+    .catch(err => console.log('შეცდომა:', err));
+}
+// --- არქივაციის ლოგიკა ---
+
+async function archiveHistory() {
+    // ვამოწმებთ არის თუ არა ისტორიაში მონაცემები
+    if (!currentData.history || Object.keys(currentData.history).length === 0) {
+        return alert("ისტორია ცარიელია, დასაარქივებელი არაფერია!");
+    }
+
+    const confirmArchive = confirm("დარწმუნებული ხართ, რომ გსურთ მიმდინარე პერიოდის დახურვა და შენახვა?");
+    if (!confirmArchive) return;
+
+    toggleLoading(true);
+    const p = document.getElementById('prod').value;
+
+    try {
+        // პერიოდის დიაპაზონის გამოთვლა
+        const entries = Object.values(currentData.history);
+        const timestamps = entries.map(e => e.timestamp).sort((a, b) => a - b);
+        
+        const firstDate = getDateOnly(timestamps[0]);
+        const lastDate = getDateOnly(timestamps[timestamps.length - 1]);
+        const periodName = `${firstDate} - ${lastDate}`;
+
+        // შესანახი ობიექტის შექმნა
+        const archiveData = {
+            period: periodName,
+            timestamp: Date.now(),
+            stats: {
+                profit: currentData.profit || 0,
+                revenue: currentData.revenue || 0,
+                debt: currentData.debt || 0,
+                final_stock: currentData.stock || 0
+            },
+            history: currentData.history,
+            closed_by: currentUser
+        };
+
+        // ბაზაში შენახვა 'archives' ფოლდერში
+        await db.ref('archives/' + p).push(archiveData);
+
+        // მიმდინარე მონაცემების განულება (ისტორია, მოგება, ამონაგები, ვალები)
+        await db.ref('inventory/' + p).update({
+            history: null,
+            profit: 0,
+            revenue: 0,
+            debt: 0
+        });
+
+        alert(`სესია წარმატებით დაიხურა: ${periodName}`);
+    } catch (err) {
+        alert("შეცდომა არქივაციისას: " + err.message);
+    }
+    toggleLoading(false);
+}
+
+// არქივის მოდალის მართვა
+function toggleArchiveModal(show) {
+    document.getElementById('archive-modal-overlay').style.display = show ? 'flex' : 'none';
+}
+
+// არქივების სიის გამოტანა
+async function showArchiveList() {
+    toggleArchiveModal(true);
+    const container = document.getElementById('archive-list-container');
+    container.innerHTML = "<div style='text-align:center; padding:20px; color: #aaa;'>იტვირთება...</div>";
+    const p = document.getElementById('prod').value;
+
+    try {
+        const snap = await db.ref('archives/' + p).once('value');
+        const archives = snap.val();
+        if (!archives) {
+            container.innerHTML = "<div style='text-align:center; padding:20px; color:#666;'>არქივი ცარიელია</div>";
+            return;
+        }
+
+        let totalWeight = 0, totalProfit = 0, totalRevenue = 0, totalExpense = 0;
+
+        Object.values(archives).forEach(data => {
+            totalProfit += (Number(data.stats?.profit) || 0);
+            totalRevenue += (Number(data.stats?.revenue) || 0);
+            
+            if (data.history) {
+                Object.values(data.history).forEach(h => {
+                    const q = parseFloat(h.qty) || 0;
+                    const price = parseFloat(h.price) || 0;
+                    const type = h.type ? h.type.toLowerCase() : "";
+
+                    // თუ ტიპი არის ხარჯი (expense)
+                    if (type === 'expense' || (h.note && h.note.includes('ხარჯი'))) {
+                        // ხარჯის დროს ვიღებთ მხოლოდ ფასს და არ ვამრავლებთ კილოგრამზე
+                        totalExpense += price; 
+                    } 
+                    // თუ ტიპი არის გაყიდვა ან კონსიგნაცია
+                    else {
+                        totalWeight += q;
+                    }
+                });
+            }
+        });
+
+        let summaryHtml = `
+            <div style="background: linear-gradient(135deg, #1e1e1e, #2a2a2a); border-radius: 15px; padding: 15px; margin-bottom: 20px; border: 1px solid #38ef7d33; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div style="text-align: center; border-right: 1px solid #333;">
+                    <div style="color: #888; font-size: 10px; text-transform: uppercase;">სულ წონა</div>
+                    <div style="color: #fff; font-size: 16px; font-weight: bold;">${totalWeight.toFixed(1)} კგ</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="color: #888; font-size: 10px; text-transform: uppercase;">ჯამური ხარჯი</div>
+                    <div style="color: #ff4b2b; font-size: 16px; font-weight: bold;">${totalExpense.toFixed(2)} ₾</div>
+                </div>
+                <div style="text-align: center; border-right: 1px solid #333; padding-top: 10px; border-top: 1px solid #333;">
+                    <div style="color: #888; font-size: 10px; text-transform: uppercase;">ჯამური ამონაგები</div>
+                    <div style="color: #38ef7d; font-size: 16px; font-weight: bold;">${totalRevenue.toFixed(2)} ₾</div>
+                </div>
+                <div style="text-align: center; padding-top: 10px; border-top: 1px solid #333;">
+                    <div style="color: #888; font-size: 10px; text-transform: uppercase;">წმინდა მოგება</div>
+                    <div style="color: #2575fc; font-size: 16px; font-weight: bold;">${totalProfit.toFixed(2)} ₾</div>
+                </div>
+            </div>
+        `;
+
+        let listHtml = Object.entries(archives).reverse().map(([id, data]) => `
+            <div style="background:#222; margin-bottom:12px; padding:15px; border-radius:15px; border: 1px solid #333; border-left:4px solid #38ef7d;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                    <div>
+                        <div style="color:#38ef7d; font-weight:bold; font-size: 14px;">📅 ${data.period}</div>
+                        <div style="font-size:11px; color:#ccc; margin-top:5px;">მოგება: ${(Number(data.stats?.profit) || 0).toFixed(2)} ₾ | ამონაგები: ${(Number(data.stats?.revenue) || 0).toFixed(2)} ₾</div>
+                    </div>
+                    <button onclick="viewArchiveItems('${p}', '${id}')" style="width:auto; padding:6px 12px; font-size:11px; background:#2575fc; border-radius:8px; color:white; border:none; cursor:pointer;">ნახვა 🔍</button>
+                </div>
+                <div id="details-${id}" style="display:none; margin-top:10px; padding-top:10px; border-top:1px dashed #444;"></div>
+            </div>
+        `).join('');
+
+        container.innerHTML = summaryHtml + listHtml;
+    } catch (err) {
+        container.innerHTML = "<div style='color:red; text-align:center;'>შეცდომა!</div>";
+    }
+}
+
+
+
+
+async function viewArchiveItems(prodId, archiveId) {
+    const detailDiv = document.getElementById(`details-${archiveId}`);
+    
+    if (detailDiv.style.display === 'block') {
+        detailDiv.style.display = 'none';
+        return;
+    }
+
+    try {
+        const currentProd = prodId || document.getElementById('prod').value;
+        const snap = await db.ref(`archives/${currentProd}/${archiveId}/history`).once('value');
+        const history = snap.val();
+        
+        if (!history) {
+            detailDiv.innerHTML = "<div style='color:#666; font-size:10px; padding:5px;'>ისტორია ცარიელია</div>";
+            detailDiv.style.display = 'block';
+            return;
+        }
+
+        let itemsHtml = Object.values(history).reverse().map(h => {
+            // თარიღის ფორმატირება: დღე/თვე საათი:წუთი
+            const d = new Date(h.timestamp);
+            const dateStr = h.timestamp ? 
+                `${d.getDate()}.${d.getMonth() + 1} ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}` : 
+                '--.--';
+
+            let color = h.type === 'sell' ? '#38ef7d' : (h.type === 'expense' ? '#ff4b2b' : '#f1c40f');
+            let icon = h.type === 'sell' ? '💰' : (h.type === 'expense' ? '⛽' : '📝');
+            
+            // ვიყენებთ h.total-ს ან h.price * h.qty-ს თუ ტოტალი არაა
+            const amount = h.total || (h.price * h.qty) || 0;
+
+            return `
+                <div style="font-size:11px; color:#eee; margin-bottom:6px; display:flex; justify-content:space-between; border-bottom: 1px solid #333; padding-bottom: 4px; align-items: center;">
+                    <span style="flex: 1;">${icon} ${h.note || '---'} <small style="color:#888;">(${h.qty} კგ)</small></span>
+                    <span style="color:${color}; font-weight: bold; min-width: 60px; text-align: right;">${amount.toFixed(2)} ₾</span>
+                    <span style="color:#555; font-size:9px; min-width: 65px; text-align: right; margin-left: 8px;">${dateStr}</span>
+                </div>
+            `;
+        }).join('');
+
+        detailDiv.innerHTML = itemsHtml;
+        detailDiv.style.display = 'block';
+    } catch (err) {
+        alert("შეცდომა: " + err.message);
+    }
+}
+
+
+
+
+</script>
+
+<div id="archive-modal-overlay" onclick="toggleArchiveModal(false)" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:1001; justify-content:center; align-items:center;">
+    <div class="modal-content" onclick="event.stopPropagation()" style="width: 90%; max-height: 85vh; background: #1a1a1a; border-radius: 20px; padding: 20px; overflow-y: auto; border: 1px solid #333;">
+        <h3 style="margin-top:0; color:#38ef7d; text-align: center;">📚 შენახული პერიოდები</h3>
+        <hr style="border: 0; border-top: 1px solid #333; margin-bottom: 20px;">
+        
+        <div id="archive-list-container"></div>
+        
+        <button onclick="toggleArchiveModal(false)" style="width:100%; margin-top:20px; background:#444; color:white; padding: 12px; border-radius: 12px; font-weight: bold;">დახურვა</button>
+    </div>
+</div>
+</body>
+</html>
